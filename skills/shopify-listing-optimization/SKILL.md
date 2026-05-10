@@ -2,13 +2,13 @@
 name: shopify-listing-optimization
 description: The 9-script pipeline that takes raw dropshipped products from "imported but broken" to "98% pass Google + Meta ad audit." Markup → publish to 5 channels → set weights (CRITICAL for checkout) → AI title/SEO → barcodes → namespaced tags → media reorder → audit → fix gaps.
 when_to_use:
-  - You just imported 20-200 products from a dropshipping source (GIGA, Aliexpress, etc.)
-  - Products show up in Shopify but don't appear in Google Shopping or sitemap
-  - Customers report "Items don't meet weight requirements" at checkout
-  - You're prepping a store for paid Google + Meta ads and need full catalog readiness
+ - You just imported 20-200 products from a dropshipping source (GIGA, Aliexpress, etc.)
+ - Products show up in Shopify but don't appear in Google Shopping or sitemap
+ - Customers report "Items don't meet weight requirements" at checkout
+ - You're prepping a store for paid Google + Meta ads and need full catalog readiness
 not_for:
-  - Optimizing a single hand-curated product (overkill — just edit it manually)
-  - Stores with strict brand-voice requirements that can't tolerate AI-rewritten copy (run optimizer with manual review pass)
+ - Optimizing a single hand-curated product (overkill — just edit it manually)
+ - Stores with strict brand-voice requirements that can't tolerate AI-rewritten copy (run optimizer with manual review pass)
 ---
 
 ## Why
@@ -23,7 +23,7 @@ Bulk-imported products from any source land with at least 5 silent breakages:
 | No `mm-google-shopping` metafields | Google Merchant Center rejects the feed | `metafieldsSet` with category/condition/age_group/gender |
 | Empty/UUID-style tags | Storefront filter sidebar empty | Regex extraction from title + variant titles into namespaces |
 
-This skill is the operational pipeline that took KZG from 70 imported products to **172/175 (98.3%) passing full Google + Meta audit**.
+This skill is the operational pipeline that took the store from 70 imported products to **172/175 (98.3%) passing full Google + Meta audit**.
 
 ## How
 
@@ -48,11 +48,11 @@ Run in this exact order. All idempotent. Stash in `~/bin/<store>-blog/` (NOT `/t
 ```python
 # Wholesale → retail
 new_price = wholesale * 1.5
-compare_at = new_price * 1.2  # ~17% Sale ribbon
+compare_at = new_price * 1.2 # ~17% Sale ribbon
 
 # Idempotency: skip variants that already have compareAtPrice set
 if any(v.get('compareAtPrice') for v in variants):
-    continue
+ continue
 ```
 
 With per-collection retail caps:
@@ -67,43 +67,43 @@ When 1.5× exceeds cap, retail clamps to `cap - 0.5` (still rounded to `.99`).
 
 ```python
 def estimate_weight(title):
-    t = title.lower()
-    # Order matters: shower-door checked BEFORE mirror (some have "mirror" in title)
-    if re.search(r'shower\s*door|tub\s*door', t):
-        return 95 if 'tub' in t else 110 if 'sliding' in t else 95
-    if re.search(r'walk-?in.*screen|shower\s*screen', t):
-        return 65
-    if 'toilet' in t and 'led' not in t:
-        return 90
-    if 'led' in t and 'mirror' in t:
-        # 18-38 lbs by size
-        m = re.search(r'(\d+)\s*(?:in|"|inch)', t)
-        size = int(m.group(1)) if m else 28
-        return 18 + (size - 16) * 0.7
-    if 'mirror' in t:
-        return 25
-    if 'bathtub' in t or re.search(r'(freestanding|soaking|acrylic)\s*tub', t):
-        m = re.search(r'(\d+)\s*(?:in|")', t)
-        size = int(m.group(1)) if m else 55
-        return 110 if size <= 43 else 150 if size <= 55 else 170 if size <= 59 else 200
-    if 'vanity' in t:
-        m = re.search(r'(\d+)\s*(?:in|")', t)
-        size = int(m.group(1)) if m else 36
-        # 24in→75, 30in→90, 36in→110, 48in→150, 60in→180, double-60→240
-        base = 60 + (size - 24) * 3
-        if 'double' in t and size >= 60: base += 60
-        return min(base, 240)
-    if 'medicine cabinet' in t:
-        return 30
-    return 50  # safe default
+ t = title.lower()
+ # Order matters: shower-door checked BEFORE mirror (some have "mirror" in title)
+ if re.search(r'shower\s*door|tub\s*door', t):
+ return 95 if 'tub' in t else 110 if 'sliding' in t else 95
+ if re.search(r'walk-?in.*screen|shower\s*screen', t):
+ return 65
+ if 'toilet' in t and 'led' not in t:
+ return 90
+ if 'led' in t and 'mirror' in t:
+ # 18-38 lbs by size
+ m = re.search(r'(\d+)\s*(?:in|"|inch)', t)
+ size = int(m.group(1)) if m else 28
+ return 18 + (size - 16) * 0.7
+ if 'mirror' in t:
+ return 25
+ if 'bathtub' in t or re.search(r'(freestanding|soaking|acrylic)\s*tub', t):
+ m = re.search(r'(\d+)\s*(?:in|")', t)
+ size = int(m.group(1)) if m else 55
+ return 110 if size <= 43 else 150 if size <= 55 else 170 if size <= 59 else 200
+ if 'vanity' in t:
+ m = re.search(r'(\d+)\s*(?:in|")', t)
+ size = int(m.group(1)) if m else 36
+ # 24in→75, 30in→90, 36in→110, 48in→150, 60in→180, double-60→240
+ base = 60 + (size - 24) * 3
+ if 'double' in t and size >= 60: base += 60
+ return min(base, 240)
+ if 'medicine cabinet' in t:
+ return 30
+ return 50 # safe default
 ```
 
 Apply via:
 ```graphql
 mutation ($variantId: ID!, $weight: Float!) {
-  inventoryItemUpdate(id: $inventoryItemId, input: {
-    measurement: { weight: { value: $weight, unit: POUNDS } }
-  }) { userErrors { field message } }
+ inventoryItemUpdate(id: $inventoryItemId, input: {
+ measurement: { weight: { value: $weight, unit: POUNDS } }
+ }) { userErrors { field message } }
 }
 ```
 
@@ -130,13 +130,13 @@ if SIG in current_description: skip()
 
 # Batch with claude-haiku-4-5 — cheap, fast, good enough
 resp = client.messages.create(
-    model='claude-haiku-4-5',
-    max_tokens=1500,
-    system=system,
-    messages=[{ "role": "user", "content": json.dumps({"title": p.title, "description": strip_html(p.descriptionHtml), "vendor": p.vendor})}],
+ model='claude-haiku-4-5',
+ max_tokens=1500,
+ system=system,
+ messages=[{ "role": "user", "content": json.dumps({"title": p.title, "description": strip_html(p.descriptionHtml), "vendor": p.vendor})}],
 )
 parsed = json.loads(resp.content[0].text)
-parsed['description_html'] += '\n' + SIG  # mark for next run
+parsed['description_html'] += '\n' + SIG # mark for next run
 ```
 
 ### Namespaced tag pattern
@@ -144,22 +144,22 @@ parsed['description_html'] += '\n' + SIG  # mark for next run
 ```python
 # Drives storefront filter sidebar via theme grouping by `:` prefix
 TAG_NAMESPACES = {
-    'size': r'\b(\d+\.?\d*)\s*(?:in|"|inch)\b',
-    'finish': ['matte-black', 'brushed-nickel', 'chrome', 'polished-chrome', 'brushed-gold', 'antique-bronze', 'stainless-steel', 'gloss-white'],
-    'style': ['frameless', 'semi-frameless', 'framed', 'sliding', 'pivot', 'swing', 'bypass', 'walk-in', 'screen', 'neo-angle', 'single', 'double', 'freestanding', 'wall-mount', 'floating'],
-    'feature': ['ada', 'dual-flush', 'tornado-flush', 'siphonic', 'comfort-height', 'elongated', 'round-bowl', 'soft-close', 'anti-fog', 'dimmable', 'backlit', 'led', 'smart', 'heated-seat', 'bidet', 'tankless'],
+ 'size': r'\b(\d+\.?\d*)\s*(?:in|"|inch)\b',
+ 'finish': ['matte-black', 'brushed-nickel', 'chrome', 'polished-chrome', 'brushed-gold', 'antique-bronze', 'stainless-steel', 'gloss-white'],
+ 'style': ['frameless', 'semi-frameless', 'framed', 'sliding', 'pivot', 'swing', 'bypass', 'walk-in', 'screen', 'neo-angle', 'single', 'double', 'freestanding', 'wall-mount', 'floating'],
+ 'feature': ['ada', 'dual-flush', 'tornado-flush', 'siphonic', 'comfort-height', 'elongated', 'round-bowl', 'soft-close', 'anti-fog', 'dimmable', 'backlit', 'led', 'smart', 'heated-seat', 'bidet', 'tankless'],
 }
 
 # Strip-and-rebuild ONLY namespaced tags (preserves manual non-namespaced tags)
-new_tags = [t for t in current_tags if ':' not in t]  # preserve non-namespaced
+new_tags = [t for t in current_tags if ':' not in t] # preserve non-namespaced
 for ns, patterns in TAG_NAMESPACES.items():
-    if isinstance(patterns, str):
-        m = re.search(patterns, title, re.I)
-        if m: new_tags.append(f'{ns}:{m.group(1)}in')
-    else:
-        for p in patterns:
-            if re.search(rf'\b{p}\b', title, re.I) or any(re.search(rf'\b{p}\b', vt, re.I) for vt in variant_titles):
-                new_tags.append(f'{ns}:{p}')
+ if isinstance(patterns, str):
+ m = re.search(patterns, title, re.I)
+ if m: new_tags.append(f'{ns}:{m.group(1)}in')
+ else:
+ for p in patterns:
+ if re.search(rf'\b{p}\b', title, re.I) or any(re.search(rf'\b{p}\b', vt, re.I) for vt in variant_titles):
+ new_tags.append(f'{ns}:{p}')
 ```
 
 ### Sales channel publishing — all 5
@@ -167,15 +167,15 @@ for ns, patterns in TAG_NAMESPACES.items():
 ```graphql
 # Get channel IDs once per shop, hardcode for speed
 mutation ($id: ID!, $publicationIds: [ID!]!) {
-  publishablePublish(id: $id, input: { publicationIds: $publicationIds })
+ publishablePublish(id: $id, input: { publicationIds: $publicationIds })
 }
 
-# Channels (KZG-specific IDs — discover via channels query):
+# Channels (the store-specific IDs — discover via channels query):
 # Online Store: gid://shopify/Publication/<store-OS-id>
-# Shop:         gid://shopify/Publication/<store-Shop-id>
-# Google & YouTube: ...   (required for Google Shopping ads)
+# Shop: gid://shopify/Publication/<store-Shop-id>
+# Google & YouTube: ... (required for Google Shopping ads)
 # Facebook & Instagram: ... (required for Meta ads)
-# Pinterest:    ...        (bonus, low effort high reward)
+# Pinterest: ... (bonus, low effort high reward)
 ```
 
 Detect missing channels per-product via `resourcePublicationsV2` and only publish the deltas — idempotent on re-run.
@@ -184,17 +184,17 @@ Detect missing channels per-product via `resourcePublicationsV2` and only publis
 
 ```graphql
 mutation {
-  metafieldsSet(metafields: [
-    { ownerId: "gid://shopify/Product/<id>", namespace: "mm-google-shopping",
-      key: "google_product_category", type: "single_line_text_field",
-      value: "Home & Garden > Plumbing Fixtures > Showers > Shower Doors" },
-    { ownerId: "gid://shopify/Product/<id>", namespace: "mm-google-shopping",
-      key: "condition", type: "single_line_text_field", value: "new" },
-    { ownerId: "gid://shopify/Product/<id>", namespace: "mm-google-shopping",
-      key: "age_group", type: "single_line_text_field", value: "adult" },
-    { ownerId: "gid://shopify/Product/<id>", namespace: "mm-google-shopping",
-      key: "gender", type: "single_line_text_field", value: "unisex" }
-  ]) { userErrors { field message } }
+ metafieldsSet(metafields: [
+ { ownerId: "gid://shopify/Product/<id>", namespace: "mm-google-shopping",
+ key: "google_product_category", type: "single_line_text_field",
+ value: "Home & Garden > Plumbing Fixtures > Showers > Shower Doors" },
+ { ownerId: "gid://shopify/Product/<id>", namespace: "mm-google-shopping",
+ key: "condition", type: "single_line_text_field", value: "new" },
+ { ownerId: "gid://shopify/Product/<id>", namespace: "mm-google-shopping",
+ key: "age_group", type: "single_line_text_field", value: "adult" },
+ { ownerId: "gid://shopify/Product/<id>", namespace: "mm-google-shopping",
+ key: "gender", type: "single_line_text_field", value: "unisex" }
+ ]) { userErrors { field message } }
 }
 ```
 
@@ -210,7 +210,7 @@ Sets up Google Channel install to be a one-click action when the user is ready.
 
 ## Real numbers
 
-KZG ad-readiness pass results (2026-05-05):
+Ad-readiness pass results :
 - 175 products total
 - 172/175 = **98.3% pass full audit**
 - 100% have title, description, vendor, productType, status=ACTIVE, publishedAt
@@ -223,14 +223,14 @@ KZG ad-readiness pass results (2026-05-05):
 
 ## Reference
 
-- KZG sales-channel publication IDs:
-  - Online Store: `gid://shopify/Publication/190948016265`
-  - Shop: `gid://shopify/Publication/190948081801`
-  - Google & YouTube: `gid://shopify/Publication/190957715593`
-  - Facebook & Instagram: `gid://shopify/Publication/190957813897`
-  - Pinterest: `gid://shopify/Publication/192331612297`
+- the store sales-channel publication IDs:
+ - Online Store: `gid://shopify/Publication/<online-store>`
+ - Shop: `gid://shopify/Publication/<shop-channel>`
+ - Google & YouTube: `gid://shopify/Publication/<your-publication-id>`
+ - Facebook & Instagram: `gid://shopify/Publication/<your-publication-id>`
+ - Pinterest: `gid://shopify/Publication/<your-publication-id>`
 - Optimizer config: `claude-haiku-4-5` model, ~$0.25/100 products
-- All scripts at `~/bin/kzg-blog/` (NOT `/tmp/` which clears on reboot)
+- All scripts at `~/bin/<store>-blog/` (NOT `/tmp/` which clears on reboot)
 
 ## Anti-pattern
 

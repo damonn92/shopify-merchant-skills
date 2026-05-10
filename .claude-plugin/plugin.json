@@ -1,16 +1,10 @@
 {
-  "name": "kna-shopify-skills",
-  "description": "KNA's battle-tested Shopify operational skills — patterns and playbooks distilled from running Calivell, KZG, and AISight in production. Covers store ops, GIGA dropshipping, listing optimization, custom CPQ via Cloudflare Worker, design wizards, cart attributes, daily blog automation, SEO baseline, AI product images, theme deployment.",
+  "name": "shopify-merchant-skills",
+  "description": "Battle-tested operational skills for Shopify merchants — patterns and playbooks for cache debugging, dropshipping import pipelines, custom CPQ via Cloudflare Worker, design wizards, cart attributes, daily blog automation, SEO baseline, AI product images, and theme deployment. Complementary to Shopify's official shopify-ai-toolkit (which covers API code generation).",
   "version": "1.0.0",
-  "author": {
-    "name": "KNA",
-    "url": "https://wearekna.com"
-  },
-  "homepage": "https://github.com/damonn92/kna-shopify-skills",
   "license": "MIT",
   "keywords": [
     "shopify",
-    "kna",
     "ecommerce",
     "dropshipping",
     "cpq",
@@ -18,6 +12,7 @@
     "graphql",
     "cloudflare-worker",
     "seo",
-    "automation"
+    "automation",
+    "merchant"
   ]
 }

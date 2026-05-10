@@ -2,19 +2,19 @@
 name: shopify-theme-deployment
 description: Deploying theme files via `themeFilesUpsert` without overwriting concurrent edits, with Whisper/Horizon-specific gotchas (`collection_list` schema, mega-menu reserved handle, mobile vertical_on_mobile).
 when_to_use:
-  - Pushing section/snippet changes to a live theme programmatically (CI, scripts, agents)
-  - Two people are editing the theme: you in code, them in Theme Editor
-  - You're targeting Whisper / Horizon and the docs are sparse on schema specifics
+ - Pushing section/snippet changes to a live theme programmatically (CI, scripts, agents)
+ - Two people are editing the theme: you in code, them in Theme Editor
+ - You're targeting Whisper / Horizon and the docs are sparse on schema specifics
 not_for:
-  - Initial theme installation (use Shopify CLI `shopify theme push` once)
-  - Apps that ship as theme app extensions (different mechanism)
+ - Initial theme installation (use Shopify CLI `shopify theme push` once)
+ - Apps that ship as theme app extensions (different mechanism)
 ---
 
 ## Why
 
 `themeFilesUpsert` looks like a simple "save file" mutation. It's not — it's a **full-file replacement**, idempotent on identical content, and silently overwrites whatever's currently in `templates/index.json` if your local copy is stale.
 
-Three specific traps we hit on KZG (theme switched 3 times in 2 weeks, Refresh → Whisper → Whisper Optimized → Whisper Optimized Mega Menu v2):
+Three specific traps commonly hit (theme switched 3 times in 2 weeks, Refresh → Whisper → Whisper Optimized → Whisper Optimized Mega Menu v2):
 
 1. **Always query MAIN role before push.** Don't trust cached theme IDs.
 2. **Always fetch the live JSON before edit.** Each `themeFilesUpsert` of `templates/index.json` is a complete replacement; building on a stale local copy silently reverts intermediate changes.
@@ -26,9 +26,9 @@ Three specific traps we hit on KZG (theme switched 3 times in 2 weeks, Refresh �
 
 ```graphql
 query {
-  themes(first: 5, roles: [MAIN]) {
-    nodes { id name role }
-  }
+ themes(first: 5, roles: [MAIN]) {
+ nodes { id name role }
+ }
 }
 ```
 
@@ -38,40 +38,40 @@ There's exactly one `MAIN` role at any time. Use that ID for pushes. Don't memoi
 
 ```python
 def edit_template_json(theme_id, filename, edit_fn):
-    # Step 1: Fetch
-    q = '''query ($id: ID!, $name: String!) {
-      theme(id: $id) {
-        files(filenames: [$name], first: 1) {
-          nodes {
-            body { ... on OnlineStoreThemeFileBodyText { content } }
-          }
-        }
-      }
-    }'''
-    res = shopify_gql(q, {'id': theme_id, 'name': filename})
-    content = res['data']['theme']['files']['nodes'][0]['body']['content']
+ # Step 1: Fetch
+ q = '''query ($id: ID!, $name: String!) {
+ theme(id: $id) {
+ files(filenames: [$name], first: 1) {
+ nodes {
+ body { ... on OnlineStoreThemeFileBodyText { content } }
+ }
+ }
+ }
+ }'''
+ res = shopify_gql(q, {'id': theme_id, 'name': filename})
+ content = res['data']['theme']['files']['nodes'][0]['body']['content']
 
-    # Step 2: Parse + edit
-    data = json.loads(content)
-    edit_fn(data)
-    new_content = json.dumps(data, indent=2)
+ # Step 2: Parse + edit
+ data = json.loads(content)
+ edit_fn(data)
+ new_content = json.dumps(data, indent=2)
 
-    # Step 3: Push if changed (avoid no-op upserts)
-    if new_content == content:
-        print(f'  no change to {filename}, skipping')
-        return
+ # Step 3: Push if changed (avoid no-op upserts)
+ if new_content == content:
+ print(f' no change to {filename}, skipping')
+ return
 
-    m = '''mutation ($id: ID!, $files: [OnlineStoreThemeFilesUpsertFileInput!]!) {
-      themeFilesUpsert(themeId: $id, files: $files) {
-        upsertedThemeFiles { filename }
-        userErrors { field message }
-      }
-    }'''
-    res = shopify_gql(m, {
-        'id': theme_id,
-        'files': [{'filename': filename, 'body': {'type': 'TEXT', 'value': new_content}}],
-    })
-    print(f'  pushed {filename}: {res}')
+ m = '''mutation ($id: ID!, $files: [OnlineStoreThemeFilesUpsertFileInput!]!) {
+ themeFilesUpsert(themeId: $id, files: $files) {
+ upsertedThemeFiles { filename }
+ userErrors { field message }
+ }
+ }'''
+ res = shopify_gql(m, {
+ 'id': theme_id,
+ 'files': [{'filename': filename, 'body': {'type': 'TEXT', 'value': new_content}}],
+ })
+ print(f' pushed {filename}: {res}')
 
 # Usage
 edit_template_json(theme_id, 'templates/index.json', lambda data: data['sections']['hero'].update({'settings': {'image': '...'}}))
@@ -82,22 +82,22 @@ edit_template_json(theme_id, 'templates/index.json', lambda data: data['sections
 ```json
 // templates/index.json — BLOCK type "collection_list"
 {
-  "sections": {
-    "homepage_collections": {
-      "type": "collection-list",
-      "settings": {
-        // ✅ Works
-        "collection_list": ["shower-doors", "toilets", "mirrors", "vanities"]
+ "sections": {
+ "homepage_collections": {
+ "type": "collection-list",
+ "settings": {
+ // ✅ Works
+ "collection_list": ["shower-doors", "toilets", "mirrors", "vanities"]
 
-        // ❌ Silently renders blank
-        // "collection_list": ["gid://shopify/Collection/319533285513"]
-        // "collection_list": ["shopify://collections/shower-doors"]
-        // "collection_list": "shower-doors,toilets"
-      },
-      "blocks": {},
-      "block_order": []
-    }
-  }
+ // ❌ Silently renders blank
+ // "collection_list": ["gid://shopify/Collection/<your-collection-id>"]
+ // "collection_list": ["shopify://collections/shower-doors"]
+ // "collection_list": "shower-doors,toilets"
+ },
+ "blocks": {},
+ "block_order": []
+ }
+ }
 }
 ```
 
@@ -109,14 +109,14 @@ Whisper has presets with `static` blocks (e.g. `_collection-card-image`). You CA
 {% comment %} sections/collection-list.liquid — already has presets defined in schema {% endcomment %}
 {% schema %}
 {
-  "name": "collection-list",
-  "presets": [{
-    "name": "Collection list",
-    "blocks": {
-      "_collection-card-image": { "type": "_collection-card-image", "static": true },
-      "_collection-card-info": { "type": "_collection-card-info", "static": true }
-    }
-  }]
+ "name": "collection-list",
+ "presets": [{
+ "name": "Collection list",
+ "blocks": {
+ "_collection-card-image": { "type": "_collection-card-image", "static": true },
+ "_collection-card-info": { "type": "_collection-card-info", "static": true }
+ }
+ }]
 }
 {% endschema %}
 ```
@@ -129,9 +129,9 @@ Each `group`/section in Horizon has a `vertical_on_mobile` toggle. **Default is 
 
 ```json
 {
-  "type": "trust-bar",
-  "settings": { "vertical_on_mobile": true },
-  "blocks": { ... }
+ "type": "trust-bar",
+ "settings": { "vertical_on_mobile": true },
+ "blocks": { ... }
 }
 ```
 
@@ -164,11 +164,7 @@ For collection-list, set `mobile_columns: "2"` for a 4-card grid.
 
 ## Reference
 
-- KZG theme switches:
-  - 2026-04-17: Refresh `gid://shopify/OnlineStoreTheme/152879497353` (initial)
-  - 2026-04-18: Whisper `gid://shopify/OnlineStoreTheme/152879104137`
-  - 2026-04-25: Whisper Optimized `gid://shopify/OnlineStoreTheme/153023119497`
-  - 2026-05-02: Whisper Optimized — Mega Menu v2 `gid://shopify/OnlineStoreTheme/153266028681`
+- Theme migration sequence: Refresh → Whisper → Whisper Optimized → Whisper Optimized + Mega Menu (each switch invalidates cached theme IDs — query MAIN role before each push)
 - Whisper available `icon` types in `blocks/icon.liquid` (59 total): apple, arrow, bag, box, chat_bubble, check_box, heart, lock, return, snapchat, star, truck — for trust-bar use `truck / lock / return` as the canonical trio
 - Section schemas live at `config/settings_schema.json` and individual `sections/*.liquid` `{% schema %}` blocks
 

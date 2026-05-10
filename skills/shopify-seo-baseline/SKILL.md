@@ -1,20 +1,20 @@
 ---
 name: shopify-seo-baseline
-description: The pre-launch SEO baseline checklist that took Calivell from "indexed by accident" to ranking — collection prose, JSON-LD bundle, sitemap audit, GSC verification via Domain Connect, theme snippet pattern.
+description: The pre-launch SEO baseline checklist that took the store from "indexed by accident" to ranking — collection prose, JSON-LD bundle, sitemap audit, GSC verification via Domain Connect, theme snippet pattern.
 when_to_use:
-  - You're launching a new Shopify store and need to do SEO right ONCE
-  - The site has 100+ SKUs and risk of duplicate-content penalty
-  - You're prepping for paid Google ads + need verified Search Console
+ - You're launching a new Shopify store and need to do SEO right ONCE
+ - The site has 100+ SKUs and risk of duplicate-content penalty
+ - You're prepping for paid Google ads + need verified Search Console
 not_for:
-  - Single-SKU brand sites (overkill — manual SEO is fine)
-  - Multi-language storefronts (need separate SEO pass per locale)
+ - Single-SKU brand sites (overkill — manual SEO is fine)
+ - Multi-language storefronts (need separate SEO pass per locale)
 ---
 
 ## Why
 
 A new Shopify store has **factory-default SEO**: empty `seo.title`, generic meta descriptions, broken `robots.txt` redirects from 3rd-party app drops, and 0 structured data. Google indexes the homepage and 1-2 collections, then loses interest.
 
-This skill is the **one-time pre-launch pass** that gets the site to the level where ongoing daily content (see [`shopify-daily-blog-automation`](../shopify-daily-blog-automation/SKILL.md)) and ad campaigns can actually compound. Built from doing it for Calivell (206 SKUs, 6 collections, 3 pages) end-to-end.
+This skill is the **one-time pre-launch pass** that gets the site to the level where ongoing daily content (see [`shopify-daily-blog-automation`](../shopify-daily-blog-automation/SKILL.md)) and ad campaigns can actually compound. Built from doing it on a real store (206 SKUs, 6 collections, 3 pages) end-to-end.
 
 ## How
 
@@ -59,7 +59,7 @@ Cleanup helpers:
 ```graphql
 # Strip "- Main View" suffixes
 mutation ($id: ID!, $alt: String!) {
-  productUpdateMedia(productId: $id, media: [{ id: "...", alt: $alt }]) { mediaUserErrors { field message } }
+ productUpdateMedia(productId: $id, media: [{ id: "...", alt: $alt }]) { mediaUserErrors { field message } }
 }
 ```
 
@@ -74,14 +74,14 @@ Pages (`/pages/about`, `/pages/contact`, `/pages/faq`):
 
 ```graphql
 mutation {
-  metafieldsSet(metafields: [
-    { ownerId: "gid://shopify/Page/<id>", namespace: "global",
-      key: "title_tag", type: "single_line_text_field",
-      value: "FAQ — Shipping, Returns, Assembly | <Brand>" },
-    { ownerId: "gid://shopify/Page/<id>", namespace: "global",
-      key: "description_tag", type: "single_line_text_field",
-      value: "30 questions answered: shipping times, return policy, mattress sizing..." }
-  ]) { userErrors { field message } }
+ metafieldsSet(metafields: [
+ { ownerId: "gid://shopify/Page/<id>", namespace: "global",
+ key: "title_tag", type: "single_line_text_field",
+ value: "FAQ — Shipping, Returns, Assembly | <Brand>" },
+ { ownerId: "gid://shopify/Page/<id>", namespace: "global",
+ key: "description_tag", type: "single_line_text_field",
+ value: "30 questions answered: shipping times, return policy, mattress sizing..." }
+ ]) { userErrors { field message } }
 }
 ```
 
@@ -90,17 +90,17 @@ mutation {
 Create `snippets/<brand>-jsonld.liquid`, render from `layout/theme.liquid` just before `{{ content_for_header }}`:
 
 ```liquid
-{%- comment -%} snippets/calivell-jsonld.liquid {%- endcomment -%}
+{%- comment -%} snippets/<your-store>-jsonld.liquid {%- endcomment -%}
 
 {%- comment -%} Organization (all pages) {%- endcomment -%}
 <script type="application/ld+json">
 {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  "name": "{{ shop.name }}",
-  "url": "{{ shop.url }}",
-  "logo": "{{ shop.url }}{{ 'logo.png' | asset_url }}",
-  "sameAs": ["https://www.instagram.com/...", "https://www.facebook.com/..."]
+ "@context": "https://schema.org",
+ "@type": "Organization",
+ "name": "{{ shop.name }}",
+ "url": "{{ shop.url }}",
+ "logo": "{{ shop.url }}{{ 'logo.png' | asset_url }}",
+ "sameAs": ["https://www.instagram.com/...", "https://www.facebook.com/..."]
 }
 </script>
 
@@ -108,31 +108,31 @@ Create `snippets/<brand>-jsonld.liquid`, render from `layout/theme.liquid` just 
 {%- if request.page_type == 'product' and product -%}
 <script type="application/ld+json">
 {
-  "@context": "https://schema.org",
-  "@type": "Product",
-  "name": "{{ product.title | escape }}",
-  "image": [{% for img in product.images limit: 5 %}"{{ img | image_url: width: 1200 }}"{% unless forloop.last %},{% endunless %}{% endfor %}],
-  "description": "{{ product.description | strip_html | truncate: 500 | escape }}",
-  "sku": "{{ product.selected_or_first_available_variant.sku }}",
-  "brand": { "@type": "Brand", "name": "{{ product.vendor | escape }}" },
-  "offers": {
-    "@type": "Offer",
-    "url": "{{ shop.url }}{{ product.url }}",
-    "priceCurrency": "{{ cart.currency.iso_code }}",
-    "price": "{{ product.selected_or_first_available_variant.price | money_without_currency | strip_html }}",
-    "availability": "{% if product.available %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}"
-  }
+ "@context": "https://schema.org",
+ "@type": "Product",
+ "name": "{{ product.title | escape }}",
+ "image": [{% for img in product.images limit: 5 %}"{{ img | image_url: width: 1200 }}"{% unless forloop.last %},{% endunless %}{% endfor %}],
+ "description": "{{ product.description | strip_html | truncate: 500 | escape }}",
+ "sku": "{{ product.selected_or_first_available_variant.sku }}",
+ "brand": { "@type": "Brand", "name": "{{ product.vendor | escape }}" },
+ "offers": {
+ "@type": "Offer",
+ "url": "{{ shop.url }}{{ product.url }}",
+ "priceCurrency": "{{ cart.currency.iso_code }}",
+ "price": "{{ product.selected_or_first_available_variant.price | money_without_currency | strip_html }}",
+ "availability": "{% if product.available %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}"
+ }
 }
 </script>
 <script type="application/ld+json">
 {
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  "itemListElement": [
-    { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ shop.url }}" },
-    {%- if collection -%}{ "@type": "ListItem", "position": 2, "name": "{{ collection.title }}", "item": "{{ shop.url }}{{ collection.url }}" },{%- endif -%}
-    { "@type": "ListItem", "position": 3, "name": "{{ product.title }}", "item": "{{ shop.url }}{{ product.url }}" }
-  ]
+ "@context": "https://schema.org",
+ "@type": "BreadcrumbList",
+ "itemListElement": [
+ { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ shop.url }}" },
+ {%- if collection -%}{ "@type": "ListItem", "position": 2, "name": "{{ collection.title }}", "item": "{{ shop.url }}{{ collection.url }}" },{%- endif -%}
+ { "@type": "ListItem", "position": 3, "name": "{{ product.title }}", "item": "{{ shop.url }}{{ product.url }}" }
+ ]
 }
 </script>
 {%- endif -%}
@@ -141,11 +141,11 @@ Create `snippets/<brand>-jsonld.liquid`, render from `layout/theme.liquid` just 
 {%- if request.page_type == 'collection' and collection -%}
 <script type="application/ld+json">
 {
-  "@context": "https://schema.org",
-  "@type": "CollectionPage",
-  "name": "{{ collection.title | escape }}",
-  "description": "{{ collection.description | strip_html | truncate: 500 | escape }}",
-  "url": "{{ shop.url }}{{ collection.url }}"
+ "@context": "https://schema.org",
+ "@type": "CollectionPage",
+ "name": "{{ collection.title | escape }}",
+ "description": "{{ collection.description | strip_html | truncate: 500 | escape }}",
+ "url": "{{ shop.url }}{{ collection.url }}"
 }
 </script>
 {%- endif -%}
@@ -154,22 +154,22 @@ Create `snippets/<brand>-jsonld.liquid`, render from `layout/theme.liquid` just 
 {%- if request.page_type == 'index' -%}
 <script type="application/ld+json">
 {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "url": "{{ shop.url }}",
-  "potentialAction": {
-    "@type": "SearchAction",
-    "target": "{{ shop.url }}/search?q={search_term_string}",
-    "query-input": "required name=search_term_string"
-  }
+ "@context": "https://schema.org",
+ "@type": "WebSite",
+ "url": "{{ shop.url }}",
+ "potentialAction": {
+ "@type": "SearchAction",
+ "target": "{{ shop.url }}/search?q={search_term_string}",
+ "query-input": "required name=search_term_string"
+ }
 }
 </script>
 {%- endif -%}
 
 {%- comment -%} Brand visual + crawler hints {%- endcomment -%}
-<meta name="theme-color" content="#1B2D5B">
+<meta name="theme-color" content="#000000">
 <link rel="apple-touch-icon" href="{{ 'apple-touch-icon.png' | asset_url }}">
-<meta name="msapplication-TileColor" content="#1B2D5B">
+<meta name="msapplication-TileColor" content="#000000">
 {%- if request.page_type == 'cart' or request.page_type == 'customers/account' -%}
 <meta name="robots" content="noindex, nofollow">
 {%- else -%}
@@ -242,20 +242,20 @@ curl -s https://yourstore.com/sitemap.xml | grep -c '<loc>'
 
 - **`shop.metafields.global.title_tag` exists ONLY if you wrote it.** Default response is empty, not an error. Snippet handles both.
 
-- **DNS-verified domain property ≠ URL-prefix property.** They're separate in GSC. Submit the sitemap to whichever you actually verified. Domain property covers all subdomains too (handy if you add `blog.calivell.com` later).
+- **DNS-verified domain property ≠ URL-prefix property.** They're separate in GSC. Submit the sitemap to whichever you actually verified. Domain property covers all subdomains too (handy if you add `blog.yourstore.com` later).
 
 ## Reference
 
-- **Calivell baseline result (2026-04-17):**
-  - 206 products: 100% have unique SEO title (≤60 chars), unique meta description (~145-200 chars), 4-7 tags
-  - 43 templated descriptions rewritten via Claude
-  - 140 awkward image alt texts cleaned
-  - 6 collections: 200-word descriptionHtml + 2-3 internal links each
-  - 3 pages (FAQ, About, Contact) rewritten + JSON-LD FAQPage schema
-  - GSC: domain property `calivell.com` verified via GoDaddy Domain Connect
-  - Sitemap: `https://calivell.com/sitemap.xml` submitted, 0 indexing errors
+- **the store baseline result :**
+ - 206 products: 100% have unique SEO title (≤60 chars), unique meta description (~145-200 chars), 4-7 tags
+ - 43 templated descriptions rewritten via Claude
+ - 140 awkward image alt texts cleaned
+ - 6 collections: 200-word descriptionHtml + 2-3 internal links each
+ - 3 pages (FAQ, About, Contact) rewritten + JSON-LD FAQPage schema
+ - GSC: domain property `yourstore.com` verified via GoDaddy Domain Connect
+ - Sitemap: `https://yourstore.com/sitemap.xml` submitted, 0 indexing errors
 
-- **KZG follow-up:** snippet `kzg-head-addons.liquid` with same pattern, including FAQ JSON-LD for the 7 FAQ Q&A on `/pages/faq` (produces Google rich FAQ snippet).
+- **the store follow-up:** snippet `<your-store>-head-addons.liquid` with same pattern, including FAQ JSON-LD for the 7 FAQ Q&A on `/pages/faq` (produces Google rich FAQ snippet).
 
 ## Anti-pattern
 

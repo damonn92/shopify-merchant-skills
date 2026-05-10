@@ -2,13 +2,13 @@
 name: shopify-cache-debugging
 description: When Shopify's page_cache serves stale rendered HTML for 30+ minutes after a theme push — diagnose via curl + GraphQL (not the browser), and emergency-bust via inline CSS or template version bumps.
 when_to_use:
-  - "You pushed a theme file but the live site still shows old content"
-  - "Browser shows old version, incognito shows new — and you've already cleared cache"
-  - "Section settings update via GraphQL but the rendered section still has old IDs"
-  - Asset CDN returns the right `?v=hash` but pages reference an OLDER bundle generation (`/cdn/shop/t/N-2/...`)
+ - "You pushed a theme file but the live site still shows old content"
+ - "Browser shows old version, incognito shows new — and you've already cleared cache"
+ - "Section settings update via GraphQL but the rendered section still has old IDs"
+ - Asset CDN returns the right `?v=hash` but pages reference an OLDER bundle generation (`/cdn/shop/t/N-2/...`)
 not_for:
-  - Real Shopify CDN purge (you can't trigger it; only Shopify can)
-  - Storefront API caching (different layer entirely)
+ - Real Shopify CDN purge (you can't trigger it; only Shopify can)
+ - Storefront API caching (different layer entirely)
 ---
 
 ## Why
@@ -32,17 +32,17 @@ Don't trust the browser. Two independent verification paths:
 **(a) GraphQL `theme.files`:**
 ```graphql
 query {
-  theme(id: "gid://shopify/OnlineStoreTheme/<id>") {
-    files(filenames: ["sections/your-section.liquid"], first: 1) {
-      nodes {
-        body {
-          ... on OnlineStoreThemeFileBodyText { content }
-        }
-        contentType
-        size
-      }
-    }
-  }
+ theme(id: "gid://shopify/OnlineStoreTheme/<id>") {
+ files(filenames: ["sections/your-section.liquid"], first: 1) {
+ nodes {
+ body {
+ ... on OnlineStoreThemeFileBodyText { content }
+ }
+ contentType
+ size
+ }
+ }
+ }
 }
 ```
 
@@ -72,23 +72,23 @@ Three escalating tactics, easiest first:
 ```bash
 shopify store execute --store <permanent>.myshopify.com --allow-mutations --query "
 mutation {
-  themeFilesUpsert(themeId: \"gid://shopify/OnlineStoreTheme/<id>\", files: [{
-    filename: \"templates/index.json\",
-    body: { type: TEXT, value: \$json }
-  }]) { upsertedThemeFiles { filename } userErrors { field message } }
+ themeFilesUpsert(themeId: \"gid://shopify/OnlineStoreTheme/<id>\", files: [{
+ filename: \"templates/index.json\",
+ body: { type: TEXT, value: \$json }
+ }]) { upsertedThemeFiles { filename } userErrors { field message } }
 }" --variables "json:$(jq '.sections.foo.settings.alt = \"v$(date +%s)\"' templates/index.json)"
 ```
 
 This bumps the JSON version → new page_cache key → fresh render.
 
-**(2b) Rename the section block key.** `kzg_design_center_promo` → `kzg_dc_promo_v2` (then `_v3` if needed). Sometimes works. Sometimes doesn't — caches can pin the OLD section ID.
+**(2b) Rename the section block key.** `block_a` → `block_a_v2` (then `_v3` if needed). Sometimes works. Sometimes doesn't — caches can pin the OLD section ID.
 
 **(2c) Inline `<style>` as emergency override.** If you must push a visual fix NOW and asset CDN cache is jammed:
 
 ```liquid
 {% comment %} sections/your-section.liquid {% endcomment %}
 <style>
-  .your-class { color: #1E3A5F; }  /* bypasses asset compilation */
+ .your-class { color: #000000; } /* bypasses asset compilation */
 </style>
 ```
 
@@ -115,7 +115,7 @@ If still stale → wait 5-15 min, retry. If still stale after 30 min → escalat
 
 ## Reference
 
-- KZG live theme during this issue: `Whisper Optimized — Mega Menu v2`, `gid://shopify/OnlineStoreTheme/153266028681`
+- the store live theme during this issue: `Whisper Optimized — Mega Menu v2`, `gid://shopify/OnlineStoreTheme/<your-theme-id>`
 - Old bundle path observed: `cdn/shop/t/7/...` while the new bundle was `cdn/shop/t/5/...`
 - `etag` header pattern: `page_cache:<STORE_ID>:<Controller>:<HASH>` — the hash changes but content doesn't, that's the giveaway
 
