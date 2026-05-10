@@ -1,0 +1,10 @@
+.DS_Store
+*.swp
+*.swo
+node_modules/
+.vscode/
+.idea/
+*.log
+config.env
+*.token
+*.secret
